@@ -1,0 +1,48 @@
+$font-family: "Bungee", cursive;
+$color: #000;
+$backgroundColor: #fff;
+$desktop-breakpoint: 850px;
+
+html,
+body {
+  height: 100%;
+  background-color: $backgroundColor;
+  color: $color;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: $font-family;
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  font-size: 3rem;
+  margin: 2rem 0;
+  padding: 0;
+}
+
+ul {
+  padding: 0;
+}
+
+ul li {
+  list-style: none;
+}
+
+html,
+body,
+#container,
+#container > div {
+  height: 100%;
+}
+
+@media (min-width: 850px) {
+  h1 {
+    margin: 2rem;
+    text-align: left;
+  }
+}
