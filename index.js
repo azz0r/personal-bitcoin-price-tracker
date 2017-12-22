@@ -2,26 +2,29 @@ import React, { PureComponent } from "react";
 import ReactDOM from "react-dom";
 import "./index.scss";
 
-// global and convenience
 const NOOP = () => {};
+
+const REFRESH_PERIOD = 3000;
 
 const apiUrl = "https://blockchain.info/ticker";
 
 const defaultCurrencies = ["USD", "GBP", "EUR"];
 
-const apiProcessor = data => {
-  console.log(data);
-  return data;
-};
+const apiProcessor = data => data;
 
 const defaultCurrency = "GBP";
 
 // components
-const Loading = () => <h2>Loading please wait</h2>;
-
-const Price = ({ last, symbol, buy, sell }) => (
+const Price = ({ last, symbol, buy, sell, amount = 1 }) => (
   <div>
-    {symbol}: {last.toLocaleString()}
+    <p>
+      <label>Buy price</label> {symbol}
+      {(sell * amount).toLocaleString()}
+    </p>{" "}
+    <p>
+      <label>Sell price</label> {symbol}
+      {(sell * amount).toLocaleString()}
+    </p>
   </div>
 );
 
@@ -58,19 +61,24 @@ const Input = ({
   />
 );
 
-const Footer = () => <footer>Wuggawoo 2018</footer>;
-
-// main app class
 class App extends PureComponent {
-  state = {
-    amount: 1,
-    prices: [],
-    result: false,
-    currencies: defaultCurrencies,
-    currency: defaultCurrency,
-  };
+  constructor(props) {
+    super(props);
 
-  componentDidMount() {
+    this.state = Object.assign(
+      {},
+      {
+        amount: 1,
+        prices: [],
+        result: false,
+        currencies: defaultCurrencies,
+        currency: defaultCurrency,
+      },
+      localStorage,
+    );
+  }
+
+  fetch = () => {
     fetch(apiUrl)
       .then(response => response.json())
       .then(responseData => {
@@ -82,10 +90,19 @@ class App extends PureComponent {
       .catch(error => {
         console.log("Error fetching data", error);
       });
+  };
+
+  componentDidMount() {
+    this._interval = setInterval(this.fetch, REFRESH_PERIOD);
+  }
+
+  componentWillUnMount() {
+    clearInterval(this._interval);
   }
 
   onChangeCurrency = event => {
     const currency = event.currentTarget.value;
+    localStorage.setItem("currency", currency);
 
     this.setState({
       currency,
@@ -93,7 +110,8 @@ class App extends PureComponent {
   };
 
   onSetAmount = event => {
-    const amount = event.currentTarget.selected;
+    const amount = event.currentTarget.value;
+    localStorage.setItem("amount", amount);
 
     this.setState({
       amount,
@@ -105,22 +123,26 @@ class App extends PureComponent {
     return (
       <section className="app">
         <h1>Personal Bitcoin Price Tracker</h1>
-        {result ? (
-          <article>
-            {Object.keys(prices).map(price => (
-              <Price key={prices[price].symbol} {...prices[price]} />
-            ))}
-          </article>
-        ) : (
-          <Loading />
-        )}
-        <Currencies
-          currencies={currencies}
-          selectedValue={currency}
-          onChange={this.onChangeCurrency}
-        />
-        <Input name="amount" value={amount} onChange={this.onSetAmount} />
-        <Footer />
+        <article>
+          {result ? (
+            [
+              <h3>{amount} BTC</h3>,
+              <Price
+                key={prices[currency].symbol}
+                {...prices[currency]}
+                amount={amount}
+              />,
+            ]
+          ) : (
+            <h2>Loading please wait</h2>
+          )}
+          <Currencies
+            currencies={currencies}
+            selectedValue={currency}
+            onChange={this.onChangeCurrency}
+          />
+          <Input name="amount" value={amount} onChange={this.onSetAmount} />
+        </article>
       </section>
     );
   }
